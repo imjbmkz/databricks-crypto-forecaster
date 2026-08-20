@@ -52,7 +52,7 @@ lag_window = Window.partitionBy("coin_id", "vs_currency").orderBy("timestamp")
 features = raw
 for lag in [1, 2, 3, 6, 12]:
     features = features.withColumn(f"price_lag_{lag}", F.lag("price", lag).over(lag_window))
-features = features.dropna(subset=["price"] + FEATURE_COLUMNS).orderBy("timestamp").cache()
+features = features.dropna(subset=["price"] + FEATURE_COLUMNS).orderBy("timestamp")
 
 row_count = features.count()
 if row_count < 100:
@@ -111,11 +111,11 @@ plt.show()
 indexed = features.withColumn("row_number", F.row_number().over(Window.orderBy("timestamp")))
 n_rows = indexed.count()
 train_end, validation_end = int(n_rows * .70), int(n_rows * .85)
-train = indexed.where(F.col("row_number") <= train_end).drop("row_number").cache()
+train = indexed.where(F.col("row_number") <= train_end).drop("row_number")
 validation = indexed.where(
     (F.col("row_number") > train_end) & (F.col("row_number") <= validation_end)
-).drop("row_number").cache()
-test = indexed.where(F.col("row_number") > validation_end).drop("row_number").cache()
+).drop("row_number")
+test = indexed.where(F.col("row_number") > validation_end).drop("row_number")
 
 split_rows = []
 for name, frame in [("train", train), ("validation", validation), ("test", test)]:
@@ -194,16 +194,16 @@ display(validation_results_df)
 # DBTITLE 1,Refit selected model and evaluate once on test
 best_model_name = validation_results_df.first()["model"]
 print(f"Selected using validation RMSE: {best_model_name}")
-train_validation = train.unionByName(validation).cache()
+train_validation = train.unionByName(validation)
 test_results = [score(persistence(test), "Persistence", "test")]
 
 if best_model_name == "Persistence":
-    best_test_predictions = persistence(test).cache()
+    best_test_predictions = persistence(test)
     best_fitted_model = None
 else:
     best_estimator = next(estimator for name, estimator in candidates if name == best_model_name)
     best_fitted_model = best_estimator.fit(train_validation)
-    best_test_predictions = best_fitted_model.transform(test).cache()
+    best_test_predictions = best_fitted_model.transform(test)
     test_results.append(score(best_test_predictions, best_model_name, "test"))
 
 test_results_df = spark.createDataFrame(test_results).orderBy("rmse")
