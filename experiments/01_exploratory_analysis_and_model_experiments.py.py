@@ -31,10 +31,18 @@ print(f"Scope: {COIN_ID}/{VS_CURRENCY}; timestamp <= {CUTOFF_TIMESTAMP}")
 # The cutoff is explicit. No forward fill is used because that would create synthetic observations.
 raw = (
     spark.table(SOURCE_TABLE)
-    .select("coin_id", "vs_currency", "timestamp", F.col("price").cast("double").alias("price"))
+    .select(
+        "coin_id",
+        "vs_currency",
+        # The processed table may store timestamp as STRING. Normalize it before
+        # ordering, filtering, or converting it to Unix seconds.
+        F.to_timestamp("timestamp", "yyyy-MM-dd HH:mm:ss").alias("timestamp"),
+        F.col("price").cast("double").alias("price"),
+    )
     .where(
         (F.col("coin_id") == COIN_ID)
         & (F.lower(F.col("vs_currency")) == VS_CURRENCY)
+        & F.col("timestamp").isNotNull()
         & (F.col("timestamp") <= F.to_timestamp(F.lit(CUTOFF_TIMESTAMP)))
     )
     .dropDuplicates(["coin_id", "vs_currency", "timestamp"])
@@ -57,7 +65,10 @@ display(features.limit(10))
 ordered = Window.orderBy("timestamp")
 quality = features.withColumn(
     "minutes_since_previous",
-    (F.col("timestamp").cast("long") - F.lag("timestamp").over(ordered).cast("long")) / 60,
+    (
+        F.unix_timestamp("timestamp")
+        - F.unix_timestamp(F.lag("timestamp").over(ordered))
+    ) / 60.0,
 )
 quality_summary = quality.agg(
     F.count("*").alias("rows"),
