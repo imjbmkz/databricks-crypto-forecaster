@@ -1,0 +1,566 @@
+{
+  "datasets": [
+    {
+      "name": "c4dba24e",
+      "displayName": "OHLC Data",
+      "queryLines": [
+        "WITH dedup AS (\r\n",
+        "  SELECT\r\n",
+        "    coin_id,\r\n",
+        "    CAST(timestamp AS TIMESTAMP) as timestamp,\r\n",
+        "    open_price,\r\n",
+        "    high_price,\r\n",
+        "    low_price,\r\n",
+        "    close_price,\r\n",
+        "    vs_currency,\r\n",
+        "    etl_timestamp,\r\n",
+        "    row_number() over (partition by \r\n",
+        "      coin_id,\r\n",
+        "      CAST(timestamp AS TIMESTAMP)\r\n",
+        "      order by etl_timestamp\r\n",
+        "    ) AS rn\r\n",
+        "  FROM\r\n",
+        "    dbx_joshdevph_dev.processed.cg_coin_ohlc_chart\r\n",
+        "  WHERE\r\n",
+        "    timestamp IS NOT NULL\r\n",
+        ")\r\n",
+        "\r\n",
+        "SELECT *\r\n",
+        "FROM dedup \r\n",
+        "WHERE rn = 1\r\n",
+        "ORDER BY timestamp"
+      ]
+    },
+    {
+      "name": "7f72dd7e",
+      "displayName": "Historical Market Data",
+      "queryLines": [
+        "with dedup As (\r\n",
+        "  SELECT\r\n",
+        "    coin_id,\r\n",
+        "    CAST(timestamp AS TIMESTAMP) as timestamp,\r\n",
+        "    price,\r\n",
+        "    market_cap,\r\n",
+        "    total_volume,\r\n",
+        "    vs_currency,\r\n",
+        "    row_number() over (partition by coin_id, timestamp order by etl_timestamp desc) as rn\r\n",
+        "  FROM\r\n",
+        "    dbx_joshdevph_dev.processed.cg_coin_historical_chart_data\r\n",
+        "  WHERE\r\n",
+        "    timestamp IS NOT NULL  \r\n",
+        ")\r\n",
+        "\r\n",
+        "SELECT *\r\n",
+        "FROM dedup\r\n",
+        "WHERE rn = 1\r\n",
+        "ORDER BY\r\n",
+        "  timestamp"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "2a1e796a",
+      "displayName": "Untitled page",
+      "layout": [
+        {
+          "widget": {
+            "name": "select-coin-id",
+            "queries": [
+              {
+                "name": "dashboards/01f19d23b3001125a69dc18a03a5782c/datasets/01f19d23f22d13bea3a961b637db9c5d_coin_id",
+                "query": {
+                  "datasetName": "c4dba24e",
+                  "fields": [
+                    {
+                      "name": "coin_id",
+                      "expression": "`coin_id`"
+                    },
+                    {
+                      "name": "coin_id_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f19d23b3001125a69dc18a03a5782c/datasets/01f19d2404fc1977a94eb58c86e60ca6_coin_id",
+                "query": {
+                  "datasetName": "7f72dd7e",
+                  "fields": [
+                    {
+                      "name": "coin_id",
+                      "expression": "`coin_id`"
+                    },
+                    {
+                      "name": "coin_id_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "disallowAll": true,
+              "frame": {
+                "showTitle": true,
+                "title": "Select Coin ID"
+              },
+              "widgetType": "filter-single-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "coin_id",
+                    "queryName": "dashboards/01f19d23b3001125a69dc18a03a5782c/datasets/01f19d23f22d13bea3a961b637db9c5d_coin_id"
+                  },
+                  {
+                    "fieldName": "coin_id",
+                    "queryName": "dashboards/01f19d23b3001125a69dc18a03a5782c/datasets/01f19d2404fc1977a94eb58c86e60ca6_coin_id"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 4,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "date-range",
+            "queries": [
+              {
+                "name": "dashboards/01f19d23b3001125a69dc18a03a5782c/datasets/01f19d23f22d13bea3a961b637db9c5d_timestamp",
+                "query": {
+                  "datasetName": "c4dba24e",
+                  "fields": [
+                    {
+                      "name": "timestamp",
+                      "expression": "`timestamp`"
+                    },
+                    {
+                      "name": "timestamp_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f19d23b3001125a69dc18a03a5782c/datasets/01f19d2404fc1977a94eb58c86e60ca6_timestamp",
+                "query": {
+                  "datasetName": "7f72dd7e",
+                  "fields": [
+                    {
+                      "name": "timestamp",
+                      "expression": "`timestamp`"
+                    },
+                    {
+                      "name": "timestamp_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Date Range"
+              },
+              "widgetType": "filter-date-range-picker",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "timestamp",
+                    "queryName": "dashboards/01f19d23b3001125a69dc18a03a5782c/datasets/01f19d23f22d13bea3a961b637db9c5d_timestamp"
+                  },
+                  {
+                    "fieldName": "timestamp",
+                    "queryName": "dashboards/01f19d23b3001125a69dc18a03a5782c/datasets/01f19d2404fc1977a94eb58c86e60ca6_timestamp"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 0,
+            "width": 4,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "cur",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "7f72dd7e",
+                  "fields": [
+                    {
+                      "name": "last(price)",
+                      "expression": "LAST(`price`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Current Price"
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "last(price)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 1,
+            "width": 3,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "273108b8",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "7f72dd7e",
+                  "fields": [
+                    {
+                      "name": "avg(price)",
+                      "expression": "AVG(`price`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Average Price"
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "avg(price)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 1,
+            "width": 3,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "2aaf5a7a",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "7f72dd7e",
+                  "fields": [
+                    {
+                      "name": "min(price)",
+                      "expression": "MIN(`price`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Minimum Price"
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "min(price)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 1,
+            "width": 3,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "a46229f0",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "7f72dd7e",
+                  "fields": [
+                    {
+                      "name": "max(price)",
+                      "expression": "MAX(`price`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Maximum Price"
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "max(price)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 9,
+            "y": 1,
+            "width": 3,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "27376c4e",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "c4dba24e",
+                  "fields": [
+                    {
+                      "name": "timestamp",
+                      "expression": "`timestamp`"
+                    },
+                    {
+                      "name": "open_price",
+                      "expression": "`open_price`"
+                    },
+                    {
+                      "name": "high_price",
+                      "expression": "`high_price`"
+                    },
+                    {
+                      "name": "low_price",
+                      "expression": "`low_price`"
+                    },
+                    {
+                      "name": "close_price",
+                      "expression": "`close_price`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 1,
+              "jsonSpec": {
+                "type": "vega-lite",
+                "spec": "{\n  \"$schema\": \"https://vega.github.io/schema/vega-lite/v5.json\",\n  \"data\": {\n    \"name\": \"databricks_query\"\n  },\n  \"width\": \"container\",\n  \"height\": \"container\",\n  \"config\": {\n    \"autosize\": {\n      \"type\": \"fit\",\n      \"contains\": \"padding\"\n    }\n  },\n  \"layer\": [\n    {\n      \"mark\": \"rule\",\n      \"encoding\": {\n        \"x\": {\n          \"field\": \"timestamp\",\n          \"type\": \"temporal\",\n          \"title\": \"Date\"\n        },\n        \"y\": {\n          \"field\": \"low_price\",\n          \"type\": \"quantitative\",\n          \"scale\": {\n            \"zero\": false\n          },\n          \"title\": \"Price\"\n        },\n        \"y2\": {\n          \"field\": \"high_price\"\n        },\n        \"color\": {\n          \"condition\": {\n            \"test\": \"datum.open_price <= datum.close_price\",\n            \"value\": \"#26a69a\"\n          },\n          \"value\": \"#ef5350\"\n        }\n      }\n    },\n    {\n      \"mark\": \"bar\",\n      \"encoding\": {\n        \"x\": {\n          \"field\": \"timestamp\",\n          \"type\": \"temporal\"\n        },\n        \"y\": {\n          \"field\": \"open_price\",\n          \"type\": \"quantitative\"\n        },\n        \"y2\": {\n          \"field\": \"close_price\"\n        },\n        \"color\": {\n          \"condition\": {\n            \"test\": \"datum.open_price <= datum.close_price\",\n            \"value\": \"#26a69a\"\n          },\n          \"value\": \"#ef5350\"\n        }\n      }\n    }\n  ]\n}"
+              },
+              "frame": {
+                "title": "Candlestick Chart",
+                "showTitle": true
+              },
+              "widgetType": "custom-vega-viz",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "timestamp"
+                  },
+                  {
+                    "fieldName": "open_price"
+                  },
+                  {
+                    "fieldName": "high_price"
+                  },
+                  {
+                    "fieldName": "low_price"
+                  },
+                  {
+                    "fieldName": "close_price"
+                  }
+                ]
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 6,
+            "width": 12,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "historical-5-m",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "7f72dd7e",
+                  "fields": [
+                    {
+                      "name": "timestamp",
+                      "expression": "`timestamp`"
+                    },
+                    {
+                      "name": "sum(price)",
+                      "expression": "SUM(`price`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showTitle": true,
+                "title": "Historical Prices (5-Min Intervals)"
+              },
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "timestamp",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(price)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 6,
+            "height": 4
+          }
+        },
+        {
+          "widget": {
+            "name": "851dc6e1",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "7f72dd7e",
+                  "fields": [
+                    {
+                      "name": "timestamp",
+                      "expression": "`timestamp`"
+                    },
+                    {
+                      "name": "sum(market_cap)",
+                      "expression": "SUM(`market_cap`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showTitle": true,
+                "title": "Historical Market Capitalization (5-Min Intervals)"
+              },
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "timestamp",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(market_cap)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 2,
+            "width": 6,
+            "height": 4
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}

@@ -1,0 +1,162 @@
+bundle:
+  name: joshdevph_crypto_forecaster
+
+
+# ============================================================
+# Variables
+# ============================================================
+
+variables:
+  catalog:
+    description: Unity Catalog catalog
+    default: dbx_joshdevph_dev
+
+
+# ============================================================
+# Resources
+# ============================================================
+
+resources:
+
+  jobs:
+
+    crypto_forecasting_job:
+
+      name: ${bundle.target}_crypto_forecasting_job
+
+
+      # ======================================================
+      # Tasks
+      # ======================================================
+
+      tasks:
+
+        # ----------------------------------------------------
+        # 1. Ingest Volume
+        # ----------------------------------------------------
+
+        - task_key: ingest_volume_to_raw
+
+          sql_task:
+            file:
+              path: ${workspace.file_path}/src/data_pipeline/ingest_volume_to_raw.sql
+              source: WORKSPACE
+            parameters:
+              catalog: ${var.catalog}
+            warehouse_id: afed8d7d8795bf0d
+
+
+        # ----------------------------------------------------
+        # 2. Ingest Historical Chart Data
+        # ----------------------------------------------------
+
+        - task_key: ingest_historical_chart_data
+          depends_on:
+            - task_key: ingest_volume_to_raw
+
+          sql_task:
+            file:
+              path: ${workspace.file_path}/src/data_pipeline/ingest_historical_chart_data.sql
+              source: WORKSPACE
+            parameters:
+              catalog: ${var.catalog}
+            warehouse_id: afed8d7d8795bf0d
+
+
+        # ----------------------------------------------------
+        # 3. Ingest OHLC Data
+        # ----------------------------------------------------
+
+        - task_key: ingest_ohlc_data
+          depends_on:
+            - task_key: ingest_volume_to_raw
+
+          sql_task:
+            file:
+              path: ${workspace.file_path}/src/data_pipeline/ingest_ohlc_data.sql
+              source: WORKSPACE
+            parameters:
+              catalog: ${var.catalog}
+            warehouse_id: afed8d7d8795bf0d
+
+
+        # ----------------------------------------------------
+        # 4. Feature Engineering
+        #
+        # Wait for all ingestion tasks.
+        # ----------------------------------------------------
+
+        - task_key: create_features
+
+          depends_on:
+            - task_key: ingest_historical_chart_data
+
+          spark_python_task:
+            python_file: ./src/features/create_features.py
+            parameters:
+              - --catalog
+              - ${var.catalog}
+
+          environment_key: default
+
+
+        # ----------------------------------------------------
+        # 5. Model Training
+        # ----------------------------------------------------
+
+        - task_key: model_training
+
+          depends_on:
+            - task_key: create_features
+
+          spark_python_task:
+            python_file: ./src/model_train/model_training.py
+            parameters:
+              - --catalog
+              - ${var.catalog}
+
+          environment_key: default
+
+
+      # ======================================================
+      # Serverless Environment
+      # ======================================================
+
+      environments:
+
+        - environment_key: default
+
+          spec:
+            environment_version: "4"
+
+
+# ============================================================
+# Deployment Targets
+# ============================================================
+
+targets:
+
+  # ----------------------------------------------------------
+  # Development
+  # ----------------------------------------------------------
+
+  dev:
+
+    default: true
+
+    mode: development
+
+    variables:
+      catalog: dbx_joshdevph_dev
+
+
+  # ----------------------------------------------------------
+  # Production
+  # ----------------------------------------------------------
+
+  prod:
+
+    mode: production
+
+    variables:
+      catalog: dbx_joshdevph_prd

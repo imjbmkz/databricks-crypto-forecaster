@@ -1,0 +1,339 @@
+{
+  "datasets": [
+    {
+      "name": "control_chart_data",
+      "displayName": "Model Performance Data",
+      "queryLines": [
+        "SELECT\n",
+        "  coin_id,\n",
+        "  timestamp,\n",
+        "  vs_currency,\n",
+        "  dataset_type,\n",
+        "  residual,\n",
+        "  residual_mean,\n",
+        "  lower_1_sigma,\n",
+        "  upper_1_sigma,\n",
+        "  lower_2_sigma,\n",
+        "  upper_2_sigma,\n",
+        "  lcl,\n",
+        "  ucl\n",
+        "FROM\n",
+        "  dbx_joshdevph_dev.models.cg_coin_forecasts\n",
+        "ORDER BY\n",
+        "  timestamp"
+      ],
+      "catalog": "dbx_joshdevph_dev",
+      "schema": "models"
+    }
+  ],
+  "pages": [
+    {
+      "name": "5e09a11c",
+      "displayName": "Untitled page",
+      "layout": [
+        {
+          "widget": {
+            "name": "coin_filter",
+            "queries": [
+              {
+                "name": "dashboards/01f19d3357f51b899af1c786867124ea/datasets/01f19d33a7cd17b0b01ec85c60c1ced2_coin_id",
+                "query": {
+                  "datasetName": "control_chart_data",
+                  "fields": [
+                    {
+                      "name": "coin_id",
+                      "expression": "`coin_id`"
+                    },
+                    {
+                      "name": "coin_id_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Coin Filter",
+                "showTitle": true
+              },
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "coin_id",
+                    "queryName": "dashboards/01f19d3357f51b899af1c786867124ea/datasets/01f19d33a7cd17b0b01ec85c60c1ced2_coin_id"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 3,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "timestamp_filter",
+            "queries": [
+              {
+                "name": "dashboards/01f19d3357f51b899af1c786867124ea/datasets/01f19d33a7cd17b0b01ec85c60c1ced2_timestamp",
+                "query": {
+                  "datasetName": "control_chart_data",
+                  "fields": [
+                    {
+                      "name": "timestamp",
+                      "expression": "`timestamp`"
+                    },
+                    {
+                      "name": "timestamp_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Timestamp Filter",
+                "showTitle": true
+              },
+              "widgetType": "filter-date-range-picker",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "timestamp",
+                    "queryName": "dashboards/01f19d3357f51b899af1c786867124ea/datasets/01f19d33a7cd17b0b01ec85c60c1ced2_timestamp"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 0,
+            "width": 3,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "control_chart",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "control_chart_data",
+                  "fields": [
+                    {
+                      "name": "timestamp",
+                      "expression": "`timestamp`"
+                    },
+                    {
+                      "name": "residual",
+                      "expression": "`residual`"
+                    },
+                    {
+                      "name": "residual_mean",
+                      "expression": "`residual_mean`"
+                    },
+                    {
+                      "name": "lower_1_sigma",
+                      "expression": "`lower_1_sigma`"
+                    },
+                    {
+                      "name": "upper_1_sigma",
+                      "expression": "`upper_1_sigma`"
+                    },
+                    {
+                      "name": "lower_2_sigma",
+                      "expression": "`lower_2_sigma`"
+                    },
+                    {
+                      "name": "upper_2_sigma",
+                      "expression": "`upper_2_sigma`"
+                    },
+                    {
+                      "name": "lcl",
+                      "expression": "`lcl`"
+                    },
+                    {
+                      "name": "ucl",
+                      "expression": "`ucl`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Residuals Control Chart",
+                "showTitle": true
+              },
+              "mark": {
+                "linePatterns": [
+                  "solid",
+                  "dashed",
+                  "dotted",
+                  "dotted",
+                  "dashed",
+                  "dashed",
+                  "solid",
+                  "solid"
+                ]
+              },
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "timestamp",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fields": [
+                    {
+                      "fieldName": "residual",
+                      "displayName": "Residual"
+                    },
+                    {
+                      "fieldName": "residual_mean",
+                      "displayName": "Mean"
+                    },
+                    {
+                      "fieldName": "lower_1_sigma",
+                      "displayName": "-1σ"
+                    },
+                    {
+                      "fieldName": "upper_1_sigma",
+                      "displayName": "+1σ"
+                    },
+                    {
+                      "fieldName": "lower_2_sigma",
+                      "displayName": "-2σ"
+                    },
+                    {
+                      "fieldName": "upper_2_sigma",
+                      "displayName": "+2σ"
+                    },
+                    {
+                      "fieldName": "lcl",
+                      "displayName": "-3σ (LCL)"
+                    },
+                    {
+                      "fieldName": "ucl",
+                      "displayName": "+3σ (UCL)"
+                    }
+                  ],
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 12,
+            "height": 9
+          }
+        },
+        {
+          "widget": {
+            "name": "total_observations",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "control_chart_data",
+                  "fields": [
+                    {
+                      "name": "count(*)",
+                      "expression": "COUNT(`*`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Total Observations",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "count(*)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 0,
+            "width": 3,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "out_of_control_points",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "control_chart_data",
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Out of Control Points",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {},
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 9,
+            "y": 0,
+            "width": 3,
+            "height": 2
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}
